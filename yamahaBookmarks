@@ -3,136 +3,31 @@
 import urllib2
 import urllib
 import json
+from yamahaAvr import YamahaAVR
 
 debug=True
 
 host="192.168.1.121"
-urlPrefix="http://%s/" % (host)
 
 def printJSON(data):
     print(json.dumps(data, indent=4, sort_keys=True)) 
 
-def getURL(url):
-    if debug:
-        print url
 
-    try:
-        response=urllib2.urlopen(url)
-        responseData = json.loads(response.read().encode("utf-8"))
-        if debug:
-            print "Got response."
-            
-    except urllib2.HTTPError as e:
-        # This means something went wrong.
-        print "Unable to get URL."
-        print 'getURL: {}'.format(e.code)
-        responseData=None
-    
-    except urllib2.URLError as e:
-        # This means something went wrong.
-        print "Unable to get URL:"
-        print e.reason
-        responseData=None
-
-    if debug:
-        print "-"
-        printJSON(responseData)
-        print "-"
-        
-    return responseData
-    
-def postJSON(url,jsonData):
-    if debug:
-        print url
-
-    # parameters are a dictionary
-    data = json.dumps(jsonData)
-    
-    try:
-        response=urllib2.urlopen(urllib2.Request(url,data,{'Content-Type': 'application/json'}))
-        responseData = json.loads(response.read().encode("utf-8"))
-        if debug:
-            print "Got response."
-            
-    except urllib2.HTTPError as e:
-        # This means something went wrong.
-        print "Unable to get URL."
-        print 'getURL: {}'.format(e.code)
-        responseData=None
-    
-    except urllib2.URLError as e:
-        # This means something went wrong.
-        print "Unable to get URL:"
-        print e.reason
-        responseData=None
-
-    if debug:
-        print "-"
-        printJSON(responseData)
-        print "-"
-        
-    return responseData
-    
-def resetMenu():
-    while True:
-        menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=0&size=8&lang=en")
-        if (menu["menu_layer"] == 0):
-            break
-        else:
-            getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/setListControl?list_id=main&type=return&index=0&zone=main")
-
-
-def findMenuItemIndex(list_info,text):
-    result = -1
-    for i in range(len(list_info)):
-        if (list_info[i]['text'] == text):
-            result = i
-            break
-    if debug:
-        print result
-        
-    return result
-    
-def findMenuItem(text):
-    menuStartIndex=0
-    while True:
-        menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=%d&size=8&lang=en" % menuStartIndex)
-        foundIndex = findMenuItemIndex(menu["list_info"],text)
-        if (foundIndex > -1):
-            foundIndex += menuStartIndex
-            break
-        
-        menuStartIndex += 8
-        if (menuStartIndex >= menu["max_line"]):
-            break
-    
-    return foundIndex
-
-        
-def selectMenuItem(index):
-    getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/setListControl?list_id=main&type=select&index=%s&zone=main" % (index))
-
-# {"index":9,"list_id":"main","string":"kkjg"}
-def setSearchString(index,text):
-    parameters = {'index':index,'list_id':'main','string':text}
-    postJSON(urlPrefix+"YamahaExtendedControl/v1/netusb/setSearchString",parameters)
-
-def addBookmark(index):
-    getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/manageList?list_id=main&type=add_bookmark&index=%d&timeout=0" % (index))
+upstairs = YamahaAVR(host)
 
 # radioMenuItemIndex = findMenuItemIndex(menu["max_line"],'Radio')
 
-resetMenu()
+upstairs.resetMenu()
 
-index = findMenuItem('Radio')
+index = upstairs.findMenuItem('Radio')
 if (index >= 0):
-    if (selectMenuItem(index)):
+    if (upstairs.selectMenuItem(index)):
         print "Found Radio"
 else:
     exit(1)
 
-index = findMenuItem('Favorites')
-selectMenuItem(index)
+index = upstairs.findMenuItem('Favorites')
+upstairs.selectMenuItem(index)
 
 # index = findMenuItem('Search')
 # if (index >= 0):
@@ -141,10 +36,10 @@ selectMenuItem(index)
 # index = findMenuItem('98.1 KJUG Central Coast')
 # addBookmark(index)
 
-menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=0&size=8&lang=en")
-menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=8&size=8&lang=en")
+# menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=0&size=8&lang=en")
+# menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=8&size=8&lang=en")
 
-resetMenu()
+upstairs.resetMenu()
 
 
 # http://192.168.1.121/YamahaRemoteControl/desc.xml
