@@ -8,26 +8,31 @@ from yamahaAvr import YamahaAVR
 debug=True
 
 host="192.168.1.121"
+host2="192.168.1.141"
 
 def printJSON(data):
     print(json.dumps(data, indent=4, sort_keys=True)) 
 
 
 upstairs = YamahaAVR(host)
+upstairs.getFeatures()
+
+# downstairs = YamahaAVR(host2)
+# downstairs.getStatus()
 
 # radioMenuItemIndex = findMenuItemIndex(menu["max_line"],'Radio')
 
-upstairs.resetMenu()
-
-index = upstairs.findMenuItem('Radio')
-if (index >= 0):
-    if (upstairs.selectMenuItem(index)):
-        print "Found Radio"
-else:
-    exit(1)
-
-index = upstairs.findMenuItem('Favorites')
-upstairs.selectMenuItem(index)
+# upstairs.resetMenu()
+# 
+# index = upstairs.findMenuItem('Radio')
+# if (index >= 0):
+#     if (upstairs.selectMenuItem(index)):
+#         print "Found Radio"
+# else:
+#     exit(1)
+# 
+# index = upstairs.findMenuItem('Favorites')
+# upstairs.selectMenuItem(index)
 
 # index = findMenuItem('Search')
 # if (index >= 0):
@@ -39,7 +44,7 @@ upstairs.selectMenuItem(index)
 # menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=0&size=8&lang=en")
 # menu=getURL(urlPrefix+"YamahaExtendedControl/v1/netusb/getListInfo?input=net_radio&index=8&size=8&lang=en")
 
-upstairs.resetMenu()
+# upstairs.resetMenu()
 
 
 # http://192.168.1.121/YamahaRemoteControl/desc.xml
