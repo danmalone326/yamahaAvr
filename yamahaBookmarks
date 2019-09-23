@@ -17,6 +17,10 @@ def printJSON(data):
 upstairs = YamahaAVR(host)
 upstairs.getFeatures()
 
+# upstairs.powerOn(zone='main')
+# upstairs.setInput(zone='main', input='net_radio')
+upstairs.powerStandby(zone='main')
+
 # downstairs = YamahaAVR(host2)
 # downstairs.getStatus()
 

@@ -1,0 +1,74 @@
+#!/usr/bin/python
+from yamahaAvr import YamahaAVR
+import json
+
+host="192.168.1.141"
+avr = YamahaAVR(host,False)
+
+def printJSON(data):
+    print(json.dumps(data, indent=4, sort_keys=True)) 
+
+# avr.resetMenu()
+# 
+# index = avr.findMenuItem(text='Radio')
+# avr.selectMenuItem(index=index)
+# 
+# index = avr.findMenuItem(text='Local stations')
+# avr.selectMenuItem(index=index)
+# 
+# index = avr.findMenuItem('Search')
+# if (index >= 0):
+#     avr.setSearchString(index,'KKJG')
+# 
+# index = avr.findMenuItem('98.1 KJUG Central Coast')
+# avr.addBookmark(index)
+
+# avr.resetMenu()
+# 
+# index = avr.findMenuItem(text='Radio')
+# avr.selectMenuItem(index=index)
+# 
+# index = avr.findMenuItem(text='Favorites')
+# avr.selectMenuItem(index=index)
+# 
+# fullList=avr.getFullListInfo()
+# 
+# printJSON (avr.removeBookmark(1))
+
+# fullList=avr.getFullListInfo()
+
+# index = avr.findMenuItem(text='Classic FM',thumbnail='http://static.airable.io:80/25/92/977786.png')
+# print index
+
+# avr.cdFavorites()
+# fullList = avr.getMenu()
+# 
+# printJSON(fullList)
+# print len(fullList['list_info'])
+
+# index = avr.doSearch(text='Classic FM',thumbnail='http://static.airable.io:80/25/92/977786.png')
+# fullList = avr.getMenu()
+
+# avr.cdRadio()
+# 
+# index = avr.findMenuItem(text='Local stations')
+# avr.selectMenuItem(index=index)
+
+with open('start.json', 'r') as f:
+    fullList = (json.load(f))
+
+for item in fullList['list_info']:
+    print "Searching for: %s" % item['text']
+    index = avr.doSearch(text=item['text'],thumbnail=item['thumbnail'])
+    if (index >= 0):
+        print "Found. Adding Bookmark."
+        avr.addBookmark(index=index)
+        print ""
+    else:
+        print "Not Found."
+
+avr.cdFavorites()
+fullList = avr.getMenu()
+printJSON(fullList)
+print len(fullList['list_info'])
+# print index
