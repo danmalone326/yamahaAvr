@@ -1,74 +1,131 @@
 #!/usr/bin/python
 from yamahaAvr import YamahaAVR
 import json
+import argparse
 
-host="192.168.1.141"
-avr = YamahaAVR(host,False)
+parser = argparse.ArgumentParser()
+parser.add_argument("hostname", help="Hostname or IP address of Yamaha receiver")
+parser.add_argument("filename", help="Filename")
+parser.add_argument("-p", "--progress", help="Show progress", action="store_true", default=False)
+parser.add_argument("-v", "--verbose", help="Show more output", action="store_true", default=False)
+parser.add_argument("-r", "--remove", help="Remove Favorites receiver (use with --add)", action="store_true")
+group1 = parser.add_mutually_exclusive_group(required=True)
+group1.add_argument("-a", "--add", help="Add Favorites from file", action="store_true", default=False)
+group1.add_argument("-s", "--save", help="Save Favorites to file", action="store_true", default=False)
+group1.add_argument("-d", "--display", help="Display Favorites", action="store_true", default=False)
+args = parser.parse_args()
+
+if (args.remove and not args.add):
+    parser.error("--remove/-r can only be used with --add/-a")
+
+
+# host="192.168.1.121"
+# avr = YamahaAVR(host,False)
 
 def printJSON(data):
     print(json.dumps(data, indent=4, sort_keys=True)) 
+    
+def connect(hostname,showProgress):
+    on = False
+    avr = YamahaAVR(hostname,False,showProgress)
+    for zone in avr.getZoneList():
+        avr.setZone(zone)
+        if (avr.status["power"] == 'on'):
+            on = True
+            break
+    
+    if (not on):
+        print "AVR must be on."
+        avr = None
 
-# avr.resetMenu()
-# 
-# index = avr.findMenuItem(text='Radio')
-# avr.selectMenuItem(index=index)
-# 
-# index = avr.findMenuItem(text='Local stations')
-# avr.selectMenuItem(index=index)
-# 
-# index = avr.findMenuItem('Search')
-# if (index >= 0):
-#     avr.setSearchString(index,'KKJG')
-# 
-# index = avr.findMenuItem('98.1 KJUG Central Coast')
-# avr.addBookmark(index)
+    return avr
 
-# avr.resetMenu()
-# 
-# index = avr.findMenuItem(text='Radio')
-# avr.selectMenuItem(index=index)
-# 
-# index = avr.findMenuItem(text='Favorites')
-# avr.selectMenuItem(index=index)
-# 
-# fullList=avr.getFullListInfo()
-# 
-# printJSON (avr.removeBookmark(1))
-
-# fullList=avr.getFullListInfo()
-
-# index = avr.findMenuItem(text='Classic FM',thumbnail='http://static.airable.io:80/25/92/977786.png')
-# print index
-
-# avr.cdFavorites()
-# fullList = avr.getMenu()
-# 
-# printJSON(fullList)
-# print len(fullList['list_info'])
-
-# index = avr.doSearch(text='Classic FM',thumbnail='http://static.airable.io:80/25/92/977786.png')
-# fullList = avr.getMenu()
 
 # avr.cdRadio()
 # 
 # index = avr.findMenuItem(text='Local stations')
 # avr.selectMenuItem(index=index)
 
-with open('start.json', 'r') as f:
-    fullList = (json.load(f))
+#
+# Display Favorites
+#
+def displayFavorites(avr,verbose=False):
+    avr.cdFavorites()
+    fullList = avr.getMenu()
 
-for item in fullList['list_info']:
-    print "Searching for: %s" % item['text']
-    index = avr.doSearch(text=item['text'],thumbnail=item['thumbnail'])
-    if (index >= 0):
-        print "Found. Adding Bookmark."
-        avr.addBookmark(index=index)
+    if (avr.showProgress):
         print ""
-    else:
-        print "Not Found."
+        
+    print(json.dumps(fullList, indent=4)) 
+    print ""
 
-avr.cdFavorites()
-fullList = avr.getMenu()
-printJSON(fullList)
-print len(fullList['list_info'])
+
+#
+# Remove Favorites
+#
+def removeFavorites(avr,verbose=False):
+    avr.cdFavorites()
+    fullList = avr.getMenu()
+    
+    for index in reversed(range(len(fullList['list_info']))):
+        if verbose:
+            print "Removing: %s" % fullList['list_info'][index]['text']
+        avr.removeBookmark(index)
+
+
+
+#
+# Load Favorites
+#
+def loadFavorites(avr,filename,verbose=False):
+    with open(filename, 'r') as f:
+        fullList = (json.load(f))
+
+    for item in fullList['list_info']:
+        if verbose:
+            print "Searching for: %s" % item['text']
+        index = avr.doSearch(text=item['text'],thumbnail=item['thumbnail'])
+        if (index >= 0):
+            if verbose:
+                print "Found. Adding Bookmark."
+            avr.addBookmark(index=index)
+            if verbose:
+                print ""
+        else:
+            if verbose:
+                print "Not Found."
+
+#
+# Save Favorites
+#
+def saveFavorites(avr,filename,verbose=False):
+    avr.cdFavorites()
+    fullList = avr.getMenu()
+    
+    with open(filename, 'w') as outfile:
+        json.dump(fullList, outfile, indent=4)
+
+
+
+
+avr = connect(args.hostname,args.progress)
+
+if avr:
+    if (args.save):
+        saveFavorites(avr,args.filename,verbose=args.verbose)
+
+    if (args.add):
+        if (args.remove):
+            removeFavorites(avr,verbose=args.verbose)
+
+        loadFavorites(avr,args.filename,verbose=args.verbose)
+    if (args.display):
+        displayFavorites(avr,verbose=args.verbose)
+
+
+
+# avr.cdFavorites()
+# fullList = avr.getMenu()
+# printJSON(fullList)
+# print len(fullList['list_info'])
 # print index

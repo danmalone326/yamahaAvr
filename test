@@ -1,0 +1,11 @@
+#!/usr/bin/python
+from yamahaAvr import YamahaAVR
+import json
+import argparse
+
+with open('start.json', 'r') as f:
+    fullList = (json.load(f))
+
+for item in fullList['list_info']:
+    if verbose:
+        print "Searching for: %s" % item['text']
